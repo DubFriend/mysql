@@ -1,0 +1,1 @@
+{"virtualbox":{"/opt/mysql":{"mount_options":["dmode=777","fmode=777"],"guestpath":"/opt/mysql","hostpath":"/Users/brian/Desktop/mysql","disabled":false}}}

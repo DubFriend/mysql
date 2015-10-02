@@ -4,8 +4,9 @@ mysql:
   ports:
     - "3306:3306"
   volumes:
-    - /var/lib/mysql:/var/lib/mysql:rw
-    - /opt/flags/master:/opt/flags/:rw
+    - /opt/mysql-master-volume:/var/lib/mysql:rw
+    # - /var/lib/mysql:/var/lib/mysql:rw
+    # - /opt/flags/master:/opt/flags/:rw
   environment:
     - MYSQL_USER=admin
     - MYSQL_PASS=admin
@@ -20,7 +21,8 @@ mysql_slave:
   ports:
     - "3307:3306"
   volumes:
-    - /opt/flags/slave:/opt/flags/:rw
+    - /opt/mysql-slave-volume:/var/lib/mysql:rw
+    # - /opt/flags/slave:/opt/flags/:rw
   environment:
     - MYSQL_USER=admin
     - MYSQL_PASS=admin
