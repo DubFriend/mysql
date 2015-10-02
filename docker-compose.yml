@@ -1,4 +1,29 @@
-db:
-  image: tutum/mysql:latest
+mysql:
+  build: ./5.6
+  name: mysql
+  ports:
+    - "3306:3306"
+  volumes:
+    - /var/lib/mysql:/var/lib/mysql:rw
+    - /opt/flags/master:/opt/flags/:rw
   environment:
-    MYSQL_PASS: "**ChangeMe**"
+    - MYSQL_USER=admin
+    - MYSQL_PASS=admin
+    - REPLICATION_MASTER=true
+  container_name: mysql
+  restart: always
+
+mysql_slave:
+  build: ./5.6
+  links:
+    - mysql
+  ports:
+    - "3307:3306"
+  volumes:
+    - /opt/flags/slave:/opt/flags/:rw
+  environment:
+    - MYSQL_USER=admin
+    - MYSQL_PASS=admin
+    - REPLICATION_SLAVE=true
+  container_name: mysql_slave
+  restart: always

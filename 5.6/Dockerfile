@@ -25,8 +25,11 @@ ENV MYSQL_USER=admin \
     REPLICATION_USER=replica \
     REPLICATION_PASS=replica
 
+# add directory that will serve as VOLUME for startup flags (see run.sh)
+RUN mkdir /opt/flags
+
 # Add VOLUMEs to allow backup of config and databases
-VOLUME  ["/etc/mysql", "/var/lib/mysql"]
+VOLUME  ["/etc/mysql", "/var/lib/mysql", "opt/flags"]
 
 EXPOSE 3306
 CMD ["/run.sh"]

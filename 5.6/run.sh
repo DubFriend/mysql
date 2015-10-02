@@ -11,6 +11,8 @@ LOG="/var/log/mysql/error.log"
 chmod 644 ${CONF_FILE}
 chmod 644 /etc/mysql/conf.d/mysqld_charset.cnf
 
+# touch /opt/flags/replication_set.2
+
 StartMySQL ()
 {
     /usr/bin/mysqld_safe ${EXTRA_OPTS} > /dev/null 2>&1 &
@@ -101,11 +103,13 @@ fi
 if [ -n "${REPLICATION_MASTER}" ]; then
     echo "=> Configuring MySQL replication as master (1/2) ..."
     if [ ! -f /replication_set.1 ]; then
+    # if [ ! -f /opt/flags/replication_set.1 ]; then
         RAND="$(date +%s | rev | cut -c 1-2)$(echo ${RANDOM})"
         echo "=> Writting configuration file '${CONF_FILE}' with server-id=${RAND}"
         sed -i "s/^#server-id.*/server-id = ${RAND}/" ${CONF_FILE}
         sed -i "s/^#log-bin.*/log-bin = mysql-bin/" ${CONF_FILE}
         touch /replication_set.1
+        # touch /opt/flags/replication_set.1
     else
         echo "=> MySQL replication master already configured, skip"
     fi
@@ -116,11 +120,13 @@ if [ -n "${REPLICATION_SLAVE}" ]; then
     echo "=> Configuring MySQL replication as slave (1/2) ..."
     if [ -n "${MYSQL_PORT_3306_TCP_ADDR}" ] && [ -n "${MYSQL_PORT_3306_TCP_PORT}" ]; then
         if [ ! -f /replication_set.1 ]; then
+        # if [ ! -f /opt/flags/replication_set.1 ]; then
             RAND="$(date +%s | rev | cut -c 1-2)$(echo ${RANDOM})"
             echo "=> Writting configuration file '${CONF_FILE}' with server-id=${RAND}"
             sed -i "s/^#server-id.*/server-id = ${RAND}/" ${CONF_FILE}
             sed -i "s/^#log-bin.*/log-bin = mysql-bin/" ${CONF_FILE}
             touch /replication_set.1
+            # touch /opt/flags/replication_set.1
         else
             echo "=> MySQL replication slave already configured, skip"
         fi
@@ -147,9 +153,12 @@ fi
 # Import Startup SQL
 if [ -n "${STARTUP_SQL}" ]; then
     if [ ! -f /sql_imported ]; then
+    # if [ ! -f /opt/flags/sql_imported ]; then
         echo "=> Initializing DB with ${STARTUP_SQL}"
         ImportSql
         touch /sql_imported
+        # touch /opt/flags/sql_imported
+
     fi
 fi
 
@@ -157,12 +166,20 @@ fi
 if [ -n "${REPLICATION_MASTER}" ]; then
     echo "=> Configuring MySQL replication as master (2/2) ..."
     if [ ! -f /replication_set.2 ]; then
+    # if [ ! -f /opt/flags/replication_set.2 ]; then
         echo "=> Creating a log user ${REPLICATION_USER}:${REPLICATION_PASS}"
+
+        ###############
+        mysql -uroot -e "DELETE FROM mysql.user WHERE user='${REPLICATION_USER}'"
+        mysql -uroot -e "DELETE FROM mysql.db WHERE user='${REPLICATION_USER}'"
+        ###############
+
         mysql -uroot -e "CREATE USER '${REPLICATION_USER}'@'%' IDENTIFIED BY '${REPLICATION_PASS}'"
         mysql -uroot -e "GRANT REPLICATION SLAVE ON *.* TO '${REPLICATION_USER}'@'%'"
         mysql -uroot -e "reset master"
         echo "=> Done!"
         touch /replication_set.2
+        # touch /opt/flags/replication_set.2
     else
         echo "=> MySQL replication master already configured, skip"
     fi
@@ -173,11 +190,13 @@ if [ -n "${REPLICATION_SLAVE}" ]; then
     echo "=> Configuring MySQL replication as slave (2/2) ..."
     if [ -n "${MYSQL_PORT_3306_TCP_ADDR}" ] && [ -n "${MYSQL_PORT_3306_TCP_PORT}" ]; then
         if [ ! -f /replication_set.2 ]; then
+        # if [ ! -f /opt/flags/replication_set.2 ]; then
             echo "=> Setting master connection info on slave"
             mysql -uroot -e "CHANGE MASTER TO MASTER_HOST='${MYSQL_PORT_3306_TCP_ADDR}',MASTER_USER='${MYSQL_ENV_REPLICATION_USER}',MASTER_PASSWORD='${MYSQL_ENV_REPLICATION_PASS}',MASTER_PORT=${MYSQL_PORT_3306_TCP_PORT}, MASTER_CONNECT_RETRY=30"
             mysql -uroot -e "start slave"
             echo "=> Done!"
             touch /replication_set.2
+            # touch /opt/flags/replication_set.2
         else
             echo "=> MySQL replication slave already configured, skip"
         fi
